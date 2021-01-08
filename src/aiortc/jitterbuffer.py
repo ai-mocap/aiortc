@@ -1,14 +1,18 @@
 from typing import List, Optional
+from datetime import datetime
+from dataclasses import dataclass
 
 from .rtp import RtpPacket
 
 MAX_MISORDER = 100
 
 
+@dataclass
 class JitterFrame:
-    def __init__(self, data: bytes, timestamp: int) -> None:
-        self.data = data
-        self.timestamp = timestamp
+    data: bytes
+    timestamp: int
+    ntp_timestamp: datetime
+    rtp_diff: int
 
 
 class JitterBuffer:
@@ -54,6 +58,7 @@ class JitterBuffer:
         packets = []
         remove = 0
         timestamp = None
+        ntp_timestamp = None
 
         for count in range(self.capacity):
             pos = (self._origin + count) % self._capacity
@@ -62,11 +67,14 @@ class JitterBuffer:
                 break
             if timestamp is None:
                 timestamp = packet.timestamp
+                ntp_timestamp = packet.ntp_timestamp
+                rtp_diff = packet.rtp_diff
             elif packet.timestamp != timestamp:
                 # we now have a complete frame, only store the first one
                 if frame is None:
                     frame = JitterFrame(
-                        data=b"".join([x._data for x in packets]), timestamp=timestamp
+                        data=b"".join([x._data for x in packets]), timestamp=timestamp, ntp_timestamp=ntp_timestamp,
+                        rtp_diff=rtp_diff,
                     )
                     remove = count
 

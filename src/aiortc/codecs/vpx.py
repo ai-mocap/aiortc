@@ -1,5 +1,6 @@
 import multiprocessing
 import random
+from datetime import timedelta
 from struct import pack, unpack_from
 from typing import List, Tuple, Type, TypeVar, cast
 
@@ -19,6 +20,13 @@ MAX_FRAME_RATE = 30
 PACKET_MAX = 1300
 
 DESCRIPTOR_T = TypeVar("DESCRIPTOR_T", bound="VpxPayloadDescriptor")
+
+
+class VideoFrameExt(VideoFrame):
+    def __new__(cls, *args, **kwargs):
+        inst = super().__new__(cls, *args, **kwargs)
+        inst.ntp_timestamp = None
+        return inst
 
 
 def number_of_threads(pixels: int, cpus: int) -> int:
@@ -199,9 +207,10 @@ class Vp8Decoder(Decoder):
                     break
                 assert img.fmt == lib.VPX_IMG_FMT_I420
 
-                frame = VideoFrame(width=img.d_w, height=img.d_h)
+                frame = VideoFrameExt(width=img.d_w, height=img.d_h)
                 frame.pts = encoded_frame.timestamp
                 frame.time_base = VIDEO_TIME_BASE
+                frame.ntp_timestamp = encoded_frame.ntp_timestamp + timedelta(seconds=encoded_frame.rtp_diff / VIDEO_CLOCK_RATE)
 
                 for p in range(3):
                     i_stride = img.stride[p]

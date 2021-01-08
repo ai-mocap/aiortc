@@ -13,7 +13,7 @@ from av.frame import Frame
 from . import clock
 from .codecs import depayload, get_capabilities, get_decoder, is_rtx
 from .exceptions import InvalidStateError
-from .jitterbuffer import JitterBuffer
+from .jitterbuffer import JitterBuffer, JitterFrame
 from .mediastreams import MediaStreamError, MediaStreamTrack
 from .rate import RemoteBitrateEstimator
 from .rtcdtlstransport import RTCDtlsTransport
@@ -271,6 +271,8 @@ class RTCRtpReceiver:
         self.__lsr_time: Dict[int, float] = {}
         self.__remote_streams: Dict[int, StreamStatistics] = {}
         self.__rtcp_ssrc: Optional[int] = None
+        self.__last_ntp_timestamp: datetime = clock.current_datetime()
+        self.__last_rtp_timestamp: int = 0
 
     @property
     def track(self) -> MediaStreamTrack:
@@ -411,6 +413,8 @@ class RTCRtpReceiver:
                 (packet.sender_info.ntp_timestamp) >> 16
             ) & 0xFFFFFFFF
             self.__lsr_time[packet.ssrc] = time.time()
+            self.__last_ntp_timestamp = clock.datetime_from_ntp(packet.sender_info.ntp_timestamp)
+            self.__last_rtp_timestamp = packet.sender_info.rtp_timestamp
         elif isinstance(packet, RtcpByePacket):
             self.__stop_decoder()
 
@@ -487,10 +491,13 @@ class RTCRtpReceiver:
             return
 
         # try to re-assemble encoded frame
-        encoded_frame = self.__jitter_buffer.add(packet)
+        packet.ntp_timestamp = self.__last_ntp_timestamp
+        packet.rtp_diff = packet.timestamp - self.__last_rtp_timestamp
+        encoded_frame: JitterFrame = self.__jitter_buffer.add(packet)
 
         # if we have a complete encoded frame, decode it
         if encoded_frame is not None and self.__decoder_thread:
+            # This should be divided by RTP clock rate corresponding to encoding
             encoded_frame.timestamp = self.__timestamp_mapper.map(
                 encoded_frame.timestamp
             )
