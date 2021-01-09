@@ -8,7 +8,7 @@ from typing import Iterator, List, Optional, Sequence, Tuple, Type, TypeVar
 import av
 from av.frame import Frame
 
-from ..jitterbuffer import JitterFrame
+from ..jitterbuffer import JitterFrame, VideoFrameExt
 from ..mediastreams import VIDEO_TIME_BASE, convert_timebase
 from .base import Decoder, Encoder
 
@@ -111,7 +111,7 @@ class H264Decoder(Decoder):
             logger.warning("failed to decode, skipping package: " + str(e))
             return []
 
-        return frames
+        return [VideoFrameExt(frame, ntp_timestamp=encoded_frame.ntp_timestamp) for frame in frames]
 
 
 class H264Encoder(Encoder):

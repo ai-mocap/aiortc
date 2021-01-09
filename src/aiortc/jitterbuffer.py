@@ -2,6 +2,7 @@ from typing import List, Optional
 from datetime import datetime
 from dataclasses import dataclass
 
+from av import VideoFrame
 from .rtp import RtpPacket
 
 MAX_MISORDER = 100
@@ -13,6 +14,12 @@ class JitterFrame:
     timestamp: int
     ntp_timestamp: datetime
     rtp_diff: int
+
+
+class VideoFrameExt:
+    def __init__(self, frame: VideoFrame, ntp_timestamp: datetime):
+        self.frame = frame
+        self.ntp_timestamp = ntp_timestamp
 
 
 class JitterBuffer:
