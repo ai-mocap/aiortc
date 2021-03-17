@@ -11,15 +11,17 @@ MAX_MISORDER = 100
 @dataclass
 class JitterFrame:
     data: bytes
+    packets: List[RtpPacket]
     timestamp: int
     ntp_timestamp: datetime
     rtp_diff: int
 
 
+@dataclass
 class VideoFrameExt:
-    def __init__(self, frame: VideoFrame, ntp_timestamp: datetime):
-        self.frame = frame
-        self.ntp_timestamp = ntp_timestamp
+    frame: VideoFrame
+    ntp_timestamp: datetime
+    encoded_frame: JitterFrame
 
 
 class JitterBuffer:
@@ -80,7 +82,10 @@ class JitterBuffer:
                 # we now have a complete frame, only store the first one
                 if frame is None:
                     frame = JitterFrame(
-                        data=b"".join([x._data for x in packets]), timestamp=timestamp, ntp_timestamp=ntp_timestamp,
+                        data=b"".join([x._data for x in packets]),
+                        timestamp=timestamp,
+                        ntp_timestamp=ntp_timestamp,
+                        packets=packets,
                         rtp_diff=rtp_diff,
                     )
                     remove = count

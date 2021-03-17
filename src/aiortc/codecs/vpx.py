@@ -204,8 +204,9 @@ class Vp8Decoder(Decoder):
                 frame.pts = encoded_frame.timestamp
                 frame.time_base = VIDEO_TIME_BASE
                 frame_ext = VideoFrameExt(
-                    frame,
+                    frame=frame,
                     ntp_timestamp=encoded_frame.ntp_timestamp + timedelta(seconds=encoded_frame.rtp_diff / VIDEO_CLOCK_RATE),
+                    encoded_frame=encoded_frame,
                 )
 
                 for p in range(3):
