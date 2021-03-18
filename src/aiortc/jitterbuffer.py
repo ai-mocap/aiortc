@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from av import VideoFrame
 from .rtp import RtpPacket
+from .rtcrtpparameters import RTCRtpCodecParameters
 
 MAX_MISORDER = 100
 
@@ -15,6 +16,7 @@ class JitterFrame:
     timestamp: int
     ntp_timestamp: datetime
     rtp_diff: int
+    codec: Optional[RTCRtpCodecParameters] = None
 
 
 @dataclass

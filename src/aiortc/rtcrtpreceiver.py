@@ -501,6 +501,7 @@ class RTCRtpReceiver:
             encoded_frame.timestamp = self.__timestamp_mapper.map(
                 encoded_frame.timestamp
             )
+            encoded_frame.codec = codec
             self.__decoder_queue.put((codec, encoded_frame))
 
     async def _run_rtcp(self) -> None:

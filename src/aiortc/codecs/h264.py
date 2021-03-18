@@ -111,7 +111,11 @@ class H264Decoder(Decoder):
             logger.warning("failed to decode, skipping package: " + str(e))
             return []
 
-        return [VideoFrameExt(frame, ntp_timestamp=encoded_frame.ntp_timestamp) for frame in frames]
+        return [VideoFrameExt(
+            frame,
+            ntp_timestamp=encoded_frame.ntp_timestamp,
+            encoded_frame=encoded_frame,
+        ) for frame in frames]
 
 
 class H264Encoder(Encoder):
